@@ -8,17 +8,23 @@ namespace Platformer
 	// for typedef
 	public struct Size
 	{
-		public uint x;
-		public uint y;
+		public int x;
+		public int y;
 	}
 
 	// for typedef
 	public struct Pointer
 	{
-		public uint x;
-		public uint y;
+		public int x;
+		public int y;
 
-		public bool Equals(Pointer lh, Pointer rh)
+        public Pointer(int x, int y)
+        {
+            this.x = x;
+            this.y = y;
+        }
+
+        public bool Equals(Pointer lh, Pointer rh)
 		{
 			return (lh.x == rh.x && lh.y == rh.y);
 		}
@@ -66,9 +72,9 @@ namespace Platformer
 		public Room[,] rooms;
 
 		Pointer entrance;
-		Pointer exit;
+		public Pointer exit;
 
-		KindDice pathDice  = new KindDice(0, 6);
+		KindDice pathDice  = new KindDice(1, 6);
 		KindDice roomDice  = new KindDice(0, 4);
 
 		[System.Serializable]
@@ -77,7 +83,7 @@ namespace Platformer
 			public int type = 0;
 		}
 
-		public void CreateMap(uint mapSizeX, uint mapSizeY, uint roomSizeX, uint roomSizeY)
+		public void CreateMap(int mapSizeX, int mapSizeY, int roomSizeX, int roomSizeY)
 		{
 			mapSize.x = mapSizeX;
 			mapSize.y = mapSizeY;
@@ -85,7 +91,11 @@ namespace Platformer
 			roomSize.x = roomSizeX;
 			roomSize.y = roomSizeY;
 
-			rooms = new Room[mapSize.x, mapSize.y];
+            entrance.x = -1; entrance.y = -1;
+            exit.x = -1; exit.y = -1;
+            
+
+            rooms = new Room[mapSize.x, mapSize.y];
 			for (int x = 0; x < mapSize.x; ++x) {
 				for (int y = 0; y < mapSize.y; ++y) {
 					rooms [x, y] = new Room ();
@@ -95,13 +105,31 @@ namespace Platformer
 
 		public void SetRoomType (Pointer index, int type)
 		{
-			rooms [index.x, index.y].type = type;
+            if ((index.x < 0 || index.x >= mapSize.x) || ((index.y < 0 || index.y >= mapSize.y)))
+            {
+                Debug.Log("error index : " + index.x + " : " + index.y);
+                Debug.DebugBreak();
+            }
+            Debug.Log("index : " + index.x + " : " + index.y + "   : " + type);
+            rooms [index.x, index.y].type = type;
 		}
 
-		public void CreateEntrance()
+        public int GetRoomType(Pointer index)
+        {
+            if ((index.x < 0 || index.x >= mapSize.x) || ((index.y < 0 || index.y >= mapSize.y)))
+            {
+                Debug.Log("error index : " + index.x + " : " + index.y);
+                Debug.DebugBreak();
+            }
+                
+
+            return rooms[index.x, index.y].type;
+        }
+
+        public void CreateEntrance()
 		{
 			Pointer index	= new Pointer();
-			index.x = (uint)UnityEngine.Random.Range (0, (int)mapSize.x);
+			index.x = UnityEngine.Random.Range (0, (int)mapSize.x);
 			index.y = 0;
 
 			SetRoomType (index, 1);
@@ -109,78 +137,125 @@ namespace Platformer
 			entrance = index;
 		}
 
-		//public void GeneratorPath()
-		public IEnumerator GeneratorPath()
+		public void GeneratorPath()
+		//public IEnumerator GeneratorPath()
 		{
 			
 			Pointer iterator = entrance;
+            SetRoomType(iterator, 1);
 
 			int dice = pathDice.GetRandom ();
 			iterator = DiceRull (iterator, dice);
-//			while (iterator != exit) {
-//				iterator = DiceRull (iterator, dice);
-//				yield return new WaitForSeconds (0.3f);
-//			}
+            int deadCount = 50;
+            while (iterator != exit && deadCount >= 0)
+            {
+                dice = pathDice.GetRandom();
+                iterator = DiceRull(iterator, dice);
+                //yield return new WaitForSeconds(0.3f);
+                --deadCount;
+            }
 
-			iterator = DiceRull (iterator, dice);
-			iterator = DiceRull (iterator, dice);
-			iterator = DiceRull (iterator, dice);
-			iterator = DiceRull (iterator, dice);
-			iterator = DiceRull (iterator, dice);
-
-			yield return null;
+            //yield return null;
 		}
 
-		Pointer DiceRull(Pointer index, int dice)
+        bool LeftNotSolid(int dice, Pointer temp)
+        {
+            if (dice == 1 || dice == 2)
+            {
+                temp.x--;
+                if (temp.x <= 0)
+                {
+                    temp.x = 0;
+                }
+                if (GetRoomType(temp) != 0)
+                    return true;
+            }
+            return false;
+        }
+
+        bool RightNotSolid(int dice, Pointer temp)
+        {
+            if (dice == 3 || dice == 4)
+            {
+                temp.x++;
+                if (temp.x >= mapSize.x - 1)
+                {
+                    temp.x = mapSize.x - 1;
+                }
+                if (GetRoomType(temp) != 0)
+                    return true;
+            }
+            return false;
+        }
+
+        Pointer DiceRull(Pointer index, int dice)
 		{
-			Pointer nextRoom = index;
+            if (LeftNotSolid(dice, index) || RightNotSolid(dice, index))
+                return index;
 
-			//entrance logic
-			if (index == entrance) {
-				if (dice == 5) {
-					SetRoomType (entrance, 2);
-					nextRoom.y++;
-					SetRoomType (nextRoom, 3);
-					return nextRoom;
-				} else if (dice == 1 || dice == 2) {
-					if (nextRoom.x - 1 == 0) {
-						SetRoomType (entrance, 2);
-					}
-					nextRoom.x--;
 
-				} else if (dice == 3 || dice == 4) {
-					if (nextRoom.x + 1 == mapSize.x - 1) {
-						SetRoomType (entrance, 2);
-					}
-					nextRoom.x++;
-				}
+            Pointer nextRoom = index;
+            if (dice == 5)
+            {
+                SetRoomType(nextRoom, 2);
+                nextRoom.y++;
+                if(nextRoom.y >= mapSize.y)
+                {
+                    nextRoom.y = mapSize.y - 1;
+                    exit = nextRoom;
+                    SetRoomType(nextRoom, 1);
+                }
+                else
+                    SetRoomType(nextRoom, 3);
 
-				if (nextRoom.x == 0 || nextRoom.x == mapSize.x - 1) {
-					
-				}
-			}
-			//find exit logic
-			else if (index.y == mapSize.y - 1) {
-				if (dice == 1 || dice == 2) {
-					nextRoom.x--;
-				} else if (dice == 3 || dice == 4) {
-					nextRoom.x++;
-				} else if (dice == 5) {
-					nextRoom = exit = index;
-					SetRoomType (exit, 1);
-					return nextRoom;
-				}
-			} else {
-				if (dice == 1 || dice == 2) {
-					nextRoom.x--;
-				} else if (dice == 3 || dice == 4) {
-					nextRoom.x++;
-				} else if (dice == 5) {
-					nextRoom.y++;
-				}
-			}
+                return nextRoom;
+            }
+            else if (dice == 1 || dice == 2)
+            {
+                nextRoom.x--;
+                if (nextRoom.x <= 0)
+                {
+                    nextRoom.x = 0;
+                    SetRoomType(nextRoom, 2);
+                    nextRoom.y++;
+                    if (nextRoom.y >= mapSize.y)
+                    {
+                        nextRoom.y = mapSize.y - 1;
+                        exit = nextRoom;
+                        SetRoomType(nextRoom, 1);
+                    }
+                    else
+                        SetRoomType(nextRoom, 3);
+                }
+                else
+                {
+                    SetRoomType(nextRoom, 1);
+                }
+            }
+            else if (dice == 3 || dice == 4)
+            {
+                nextRoom.x++;
+                if (nextRoom.x >= mapSize.x - 1)
+                {
+                    nextRoom.x = mapSize.x - 1;
+                    SetRoomType(nextRoom, 2);
+                    nextRoom.y++;
+                    if (nextRoom.y >= mapSize.y)
+                    {
+                        nextRoom.y = mapSize.y - 1;
+                        exit = nextRoom;
+                        SetRoomType(nextRoom, 1);
+                    }
+                    else
+                        SetRoomType(nextRoom, 3);
+                }
+                else
+                {
+                    SetRoomType(nextRoom, 1);
+                }
+            }
 
-			return nextRoom;
+            return nextRoom;
 		}
 	}
 
@@ -189,11 +264,11 @@ namespace Platformer
 	public class PlatformerGenerator : MonoBehaviour 
 	{
 
-		public uint MapSizeX;
-		public uint MapSizeY;
+		public int MapSizeX;
+		public int MapSizeY;
 
-		public uint RoomSizeX;
-		public uint RoomSizeY;
+		public int RoomSizeX;
+		public int RoomSizeY;
 
 		public GridMap mapData;
 
@@ -204,23 +279,29 @@ namespace Platformer
 			ActionGenerator ();
 		}
 
-		void ActionGenerator () 
+		public void ActionGenerator () 
 		{
-			mapData.CreateMap (MapSizeX, MapSizeY, RoomSizeX, RoomSizeY);
+            text.text = "";
+
+            mapData.CreateMap (MapSizeX, MapSizeY, RoomSizeX, RoomSizeY);
 			mapData.CreateEntrance ();
 
-			StartCoroutine (mapData.GeneratorPath ());
+            //StartCoroutine (mapData.GeneratorPath ());
+            mapData.GeneratorPath();
 
 
-			for (int x = 0; x < MapSizeX; ++x) {
+            for (int y = 0; y < MapSizeY; ++y) {
 				string line = "";
-				for (int y = 0; y < MapSizeY; ++y) {
-					line += mapData.rooms [x, y].type.ToString ();
+                for (int x = 0; x < MapSizeX; ++x) {
+                    line += mapData.rooms [x, y].type.ToString ();
 				}
 				text.text += line + "\n";
 			}
 
-		}
+            text.text += "x : " + mapData.exit.x + "  y : " + mapData.exit.y + "\n";
+
+
+        }
 	}
 
 }

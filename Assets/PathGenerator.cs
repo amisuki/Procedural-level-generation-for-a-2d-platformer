@@ -5,15 +5,17 @@ using UnityEngine.UI;
 
 namespace Platformer
 {
-	// for typedef
-	public struct Size
+    // for typedef
+    [System.Serializable]
+    public struct Size
 	{
 		public int x;
 		public int y;
 	}
 
-	// for typedef
-	public struct Pointer
+    // for typedef
+    [System.Serializable]
+    public struct Pointer
 	{
 		public int x;
 		public int y;
@@ -61,20 +63,22 @@ namespace Platformer
 	[System.Serializable]
 	public class GridMap
 	{
-		//using GenList = System.Collections.Generic.List<int>;
+		Size m_MapSize;
+        public Size mapSize { get { return m_MapSize; } }
 
-		//using MyDict = Dictionary<string, string>;
-		//using PointerI = Pointer<uint>;
+        Size roomSize;
 
-		Size mapSize;
-		Size roomSize;
+		public Room[,] m_Rooms;
+        public Room[,] rooms { get { return m_Rooms; } }
 
-		public Room[,] rooms;
 
-		Pointer entrance;
-		public Pointer exit;
+        Pointer m_Entrance;
+        public Pointer entrance { get { return m_Entrance; } }
 
-		KindDice pathDice  = new KindDice(1, 6);
+		Pointer m_Exit;
+        public Pointer exit { get { return m_Exit; } }
+
+        KindDice pathDice  = new KindDice(1, 6);
 		KindDice roomDice  = new KindDice(0, 4);
 
 		[System.Serializable]
@@ -85,69 +89,69 @@ namespace Platformer
 
 		public void CreateMap(int mapSizeX, int mapSizeY, int roomSizeX, int roomSizeY)
 		{
-			mapSize.x = mapSizeX;
-			mapSize.y = mapSizeY;
+			m_MapSize.x = mapSizeX;
+			m_MapSize.y = mapSizeY;
 
 			roomSize.x = roomSizeX;
 			roomSize.y = roomSizeY;
 
-            entrance.x = -1; entrance.y = -1;
-            exit.x = -1; exit.y = -1;
+            m_Entrance.x = -1; m_Entrance.y = -1;
+            m_Exit.x = -1; m_Exit.y = -1;
             
 
-            rooms = new Room[mapSize.x, mapSize.y];
-			for (int x = 0; x < mapSize.x; ++x) {
-				for (int y = 0; y < mapSize.y; ++y) {
-					rooms [x, y] = new Room ();
+            m_Rooms = new Room[m_MapSize.x, m_MapSize.y];
+			for (int x = 0; x < m_MapSize.x; ++x) {
+				for (int y = 0; y < m_MapSize.y; ++y) {
+					m_Rooms [x, y] = new Room ();
 				}
 			}
 		}
 
 		public void SetRoomType (Pointer index, int type)
 		{
-            if ((index.x < 0 || index.x >= mapSize.x) || ((index.y < 0 || index.y >= mapSize.y)))
+            if ((index.x < 0 || index.x >= m_MapSize.x) || ((index.y < 0 || index.y >= m_MapSize.y)))
             {
                 Debug.Log("error index : " + index.x + " : " + index.y);
                 Debug.DebugBreak();
             }
             Debug.Log("index : " + index.x + " : " + index.y + "   : " + type);
-            rooms [index.x, index.y].type = type;
+            m_Rooms [index.x, index.y].type = type;
 		}
 
         public int GetRoomType(Pointer index)
         {
-            if ((index.x < 0 || index.x >= mapSize.x) || ((index.y < 0 || index.y >= mapSize.y)))
+            if ((index.x < 0 || index.x >= m_MapSize.x) || ((index.y < 0 || index.y >= m_MapSize.y)))
             {
                 Debug.Log("error index : " + index.x + " : " + index.y);
                 Debug.DebugBreak();
             }
                 
 
-            return rooms[index.x, index.y].type;
+            return m_Rooms[index.x, index.y].type;
         }
 
         public void CreateEntrance()
 		{
 			Pointer index	= new Pointer();
-			index.x = UnityEngine.Random.Range (0, (int)mapSize.x);
+			index.x = UnityEngine.Random.Range (0, (int)m_MapSize.x);
 			index.y = 0;
 
 			SetRoomType (index, 1);
 
-			entrance = index;
+			m_Entrance = index;
 		}
 
 		public void GeneratorPath()
 		//public IEnumerator GeneratorPath()
 		{
 			
-			Pointer iterator = entrance;
+			Pointer iterator = m_Entrance;
             SetRoomType(iterator, 1);
 
 			int dice = pathDice.GetRandom ();
 			iterator = DiceRull (iterator, dice);
             int deadCount = 50;
-            while (iterator != exit && deadCount >= 0)
+            while (iterator != m_Exit && deadCount >= 0)
             {
                 dice = pathDice.GetRandom();
                 iterator = DiceRull(iterator, dice);
@@ -178,9 +182,9 @@ namespace Platformer
             if (dice == 3 || dice == 4)
             {
                 temp.x++;
-                if (temp.x >= mapSize.x - 1)
+                if (temp.x >= m_MapSize.x - 1)
                 {
-                    temp.x = mapSize.x - 1;
+                    temp.x = m_MapSize.x - 1;
                 }
                 if (GetRoomType(temp) != 0)
                     return true;
@@ -199,10 +203,10 @@ namespace Platformer
             {
                 SetRoomType(nextRoom, 2);
                 nextRoom.y++;
-                if(nextRoom.y >= mapSize.y)
+                if(nextRoom.y >= m_MapSize.y)
                 {
-                    nextRoom.y = mapSize.y - 1;
-                    exit = nextRoom;
+                    nextRoom.y = m_MapSize.y - 1;
+                    m_Exit = nextRoom;
                     SetRoomType(nextRoom, 1);
                 }
                 else
@@ -218,10 +222,10 @@ namespace Platformer
                     nextRoom.x = 0;
                     SetRoomType(nextRoom, 2);
                     nextRoom.y++;
-                    if (nextRoom.y >= mapSize.y)
+                    if (nextRoom.y >= m_MapSize.y)
                     {
-                        nextRoom.y = mapSize.y - 1;
-                        exit = nextRoom;
+                        nextRoom.y = m_MapSize.y - 1;
+                        m_Exit = nextRoom;
                         SetRoomType(nextRoom, 1);
                     }
                     else
@@ -235,15 +239,15 @@ namespace Platformer
             else if (dice == 3 || dice == 4)
             {
                 nextRoom.x++;
-                if (nextRoom.x >= mapSize.x - 1)
+                if (nextRoom.x >= m_MapSize.x - 1)
                 {
-                    nextRoom.x = mapSize.x - 1;
+                    nextRoom.x = m_MapSize.x - 1;
                     SetRoomType(nextRoom, 2);
                     nextRoom.y++;
-                    if (nextRoom.y >= mapSize.y)
+                    if (nextRoom.y >= m_MapSize.y)
                     {
-                        nextRoom.y = mapSize.y - 1;
-                        exit = nextRoom;
+                        nextRoom.y = m_MapSize.y - 1;
+                        m_Exit = nextRoom;
                         SetRoomType(nextRoom, 1);
                     }
                     else
@@ -261,7 +265,7 @@ namespace Platformer
 
 
 	[System.Serializable]
-	public class PlatformerGenerator : MonoBehaviour 
+	public class PathGenerator : MonoBehaviour 
 	{
 
 		public int MapSizeX;
@@ -270,37 +274,49 @@ namespace Platformer
 		public int RoomSizeX;
 		public int RoomSizeY;
 
-		public GridMap mapData;
+		GridMap m_MapData;
+        public GridMap mapData
+        {
+            get { return m_MapData; }
+        }
 
-		public Text text;
+        public Text text;
 
-		void Start () 
+        void Awake () 
 		{
-			ActionGenerator ();
-		}
+            m_MapData = new GridMap();
+
+        }
 
 		public void ActionGenerator () 
 		{
             text.text = "";
 
-            mapData.CreateMap (MapSizeX, MapSizeY, RoomSizeX, RoomSizeY);
-			mapData.CreateEntrance ();
+            m_MapData.CreateMap (MapSizeX, MapSizeY, RoomSizeX, RoomSizeY);
+			m_MapData.CreateEntrance ();
 
             //StartCoroutine (mapData.GeneratorPath ());
-            mapData.GeneratorPath();
+            m_MapData.GeneratorPath();
+        }
 
+        public void DrawGUI()
+        {
+            if (text == null)
+                return;
 
-            for (int y = 0; y < MapSizeY; ++y) {
-				string line = "";
-                for (int x = 0; x < MapSizeX; ++x) {
-                    line += mapData.rooms [x, y].type.ToString ();
-				}
-				text.text += line + "\n";
-			}
+            text.text += "entrance = x : " + m_MapData.entrance.x + "  y : " + m_MapData.entrance.y + "\n\n";
 
-            text.text += "x : " + mapData.exit.x + "  y : " + mapData.exit.y + "\n";
+            for (int y = 0; y < MapSizeY; ++y)
+            {
+                string line = "";
+                for (int x = 0; x < MapSizeX; ++x)
+                {
+                    line += m_MapData.m_Rooms[x, y].type.ToString();
+                }
+                text.text += line + "\n";
+            }
 
-
+            text.text += "\nexit = x : " + m_MapData.exit.x + "  y : " + m_MapData.exit.y + "\n";
         }
 	}
 

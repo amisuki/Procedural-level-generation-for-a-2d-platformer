@@ -10,6 +10,9 @@ namespace Platformer
         public Size tileRoomSize;
         public int[,] solid;
 
+		public int width = 10;
+		public int height = 8;
+
         [TextArea]
         public string[] roomtype0;
         [TextArea]
@@ -23,10 +26,19 @@ namespace Platformer
         public GameObject GoL;
         public GameObject GoP;
 
+		static void NewMethod (string aa)
+		{
+			string bb = "";
+			for (int i = 0; i < aa.Length; ++i) {
+				if (aa [i] != ',')
+					bb += aa [i].ToString ();
+			}
+			Debug.Log (bb);
+		}
 
         void Start()
         {
-
+			
         }
 
 
@@ -36,33 +48,96 @@ namespace Platformer
 
             int lX = rooms.GetLength(0);
             int lY = rooms.GetLength(1);
-
-            for(int y = lY - 1; y <= lY; --y)
+			int a = 0;
+            for(int y = lY - 1; y >= 0; --y)
+			//for(int y = 0; y < lY; ++y)
             {
-                for (int x = lX - 1; x <= lX; --x)
+				for (int x = 0; x < lX; ++x)
                 {
-                    string data = GetRoomData(rooms[x, y].type);
-                    FillOneRoom(data, x, y, map.mapSize.x, map.mapSize.y);
+//					/if (x == 1 && y == lY - 2) {
+						string data = GetRoomData (rooms [x, y].type);
+
+						FillOneRoom (data, x, Mathf.Abs((y + 1) - lY), rooms [x, y].type, width, height, 4, 4);
+
+					//}
                 }
             }
         }
 
-        public void FillOneRoom(string data, int x, int y, int width, int height)
+		public void FillOneRoom(string data, int parentX, int parentY, int type, int width, int height, int mapSizeX, int mapSizeY)
         {
+			Debug.Log ("parentX : " + parentX + "   parentY : " + parentY + "  type : " + type + " width : " + width + " height : " + height);
+			Debug.Log (data);
+
+			int j = 0;
+			int y = height - 1;
+			float originX = parentX * width;
+			float originY = parentY * height;
+
             //float spriteSize = 0.64f;
             for(int i = 0; i < data.Length; ++i)
             {
-                int line = (int)((float)i / (float)width);
-                int index = x * line + x;
                 char d = data[i];
-                if(d == '1')
-                {
-                    
+				// d == "\n"
+				if (d == 10) {
+					y--;
+					continue;
+				}
+
+				int YIndex = y;
+				int XIndex = j % width;
+				j++;
+
+
+				float pointX = (float)(XIndex + originX) * 0.64f;
+				float pointY = (float)(YIndex + originY) * 0.64f;
+
+				//Debug.Log ("X : " + (XIndex + originX) +" Y : " + (YIndex + originY) + " = " + d + " [pointX]=" + pointX + " [pointY]=" + pointY);
+
+                if(d == '1') {
+					//GameObject go = 
+					Instantiate (Go1,new Vector3(pointX, pointY, 0f), Quaternion.identity);
+
                     continue;
                 }
+
+				if(d == 'P') {
+					//GameObject go = 
+					Instantiate (GoP,new Vector3(pointX, pointY, 0f), Quaternion.identity);
+
+					continue;
+				}
+
+				if(d == 'L') {
+					//GameObject go = 
+					Instantiate (GoL,new Vector3(pointX, pointY, 0f), Quaternion.identity);
+
+					continue;
+				}
+
+				if(d == '4') {
+					if(Random.RandomRange(0, 100) <= 40)
+						Instantiate (GoL,new Vector3(pointX, pointY, 0f), Quaternion.identity);
+
+					continue;
+				}
+				if(d == '5') {
+
+					//ObstacleBlocks (newX, newY, false);
+					continue;
+				}
+				if(d == '6') {
+
+					//ObstacleBlocks (newX, newY, true);
+					continue;
+				}
             }
-            
         }
+
+		public void ObstacleBlocks(int x, int y, bool isAir)
+		{
+			
+		}
 
         public string GetRoomData( int type )
         {

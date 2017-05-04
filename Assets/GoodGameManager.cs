@@ -20,6 +20,7 @@ public class GoodGameManager : MonoBehaviour {
     {
         generator.ActionGenerator();
         generator.DrawGUI();
+		DrawTiles ();
     }
 
     public void DrawTiles()

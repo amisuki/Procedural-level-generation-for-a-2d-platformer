@@ -114,7 +114,7 @@ namespace Platformer
                 Debug.Log("error index : " + index.x + " : " + index.y);
                 Debug.DebugBreak();
             }
-            Debug.Log("index : " + index.x + " : " + index.y + "   : " + type);
+            
             m_Rooms [index.x, index.y].type = type;
 		}
 
@@ -207,7 +207,7 @@ namespace Platformer
                 {
                     nextRoom.y = m_MapSize.y - 1;
                     m_Exit = nextRoom;
-                    SetRoomType(nextRoom, 1);
+					SetRoomType(nextRoom, 3);
                 }
                 else
                     SetRoomType(nextRoom, 3);

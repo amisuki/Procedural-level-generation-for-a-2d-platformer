@@ -60,9 +60,57 @@ namespace Platformer
 		}
 	}
 
-	[System.Serializable]
+    [System.Serializable]
+    public class DiceRull
+    {
+
+        public static bool isLeft(int dice)
+        {
+            if (dice == 1 || dice == 2)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public static bool isRight(int dice)
+        {
+            if (dice == 3 || dice == 4)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public static bool isTop(int dice)
+        {
+            if (dice == 7 || dice == 8)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public static bool isDown(int dice)
+        {
+            if (dice == 5 || dice == 6)
+            {
+                return true;
+            }
+            return false;
+        }
+    }
+
+    [System.Serializable]
 	public class GridMap
 	{
+        public enum eRoomType
+        {
+            LeftRight = 1,
+            Down = 2,
+            Top = 3,
+        }
+
 		Size m_MapSize;
         public Size mapSize { get { return m_MapSize; } }
 
@@ -79,7 +127,6 @@ namespace Platformer
         public Pointer exit { get { return m_Exit; } }
 
         KindDice pathDice  = new KindDice(1, 6);
-		KindDice roomDice  = new KindDice(0, 4);
 
 		[System.Serializable]
 		public class Room 
@@ -107,7 +154,7 @@ namespace Platformer
 			}
 		}
 
-		public void SetRoomType (Pointer index, int type)
+		public void SetRoomType (Pointer index, eRoomType type)
 		{
             if ((index.x < 0 || index.x >= m_MapSize.x) || ((index.y < 0 || index.y >= m_MapSize.y)))
             {
@@ -115,7 +162,7 @@ namespace Platformer
                 Debug.DebugBreak();
             }
             
-            m_Rooms [index.x, index.y].type = type;
+            m_Rooms [index.x, index.y].type = (int)type;
 		}
 
         public int GetRoomType(Pointer index)
@@ -135,26 +182,21 @@ namespace Platformer
 			Pointer index	= new Pointer();
 			index.x = UnityEngine.Random.Range (0, (int)m_MapSize.x);
 			index.y = 0;
-
-			SetRoomType (index, 1);
-
 			m_Entrance = index;
 		}
 
 		public void GeneratorPath()
-		//public IEnumerator GeneratorPath()
 		{
-			
 			Pointer iterator = m_Entrance;
-            SetRoomType(iterator, 1);
+            SetRoomType(iterator, eRoomType.LeftRight );
 
 			int dice = pathDice.GetRandom ();
-			iterator = DiceRull (iterator, dice);
+			iterator = CalcuDiceRull(iterator, dice);
             int deadCount = 50;
             while (iterator != m_Exit && deadCount >= 0)
             {
                 dice = pathDice.GetRandom();
-                iterator = DiceRull(iterator, dice);
+                iterator = CalcuDiceRull(iterator, dice);
                 //yield return new WaitForSeconds(0.3f);
                 --deadCount;
             }
@@ -164,7 +206,7 @@ namespace Platformer
 
         bool LeftNotSolid(int dice, Pointer temp)
         {
-            if (dice == 1 || dice == 2)
+            if (DiceRull.isLeft(dice))
             {
                 temp.x--;
                 if (temp.x <= 0)
@@ -177,9 +219,10 @@ namespace Platformer
             return false;
         }
 
+
         bool RightNotSolid(int dice, Pointer temp)
         {
-            if (dice == 3 || dice == 4)
+            if (DiceRull.isRight(dice))
             {
                 temp.x++;
                 if (temp.x >= m_MapSize.x - 1)
@@ -192,70 +235,102 @@ namespace Platformer
             return false;
         }
 
-        Pointer DiceRull(Pointer index, int dice)
+        bool TopNotSolid(int dice, Pointer temp)
+        {
+            if (DiceRull.isTop(dice))
+            {
+                temp.x--;
+                if (temp.x <= 0)
+                {
+                    temp.x = 0;
+                }
+                if (GetRoomType(temp) != 0)
+                    return true;
+            }
+            return false;
+        }
+
+        bool DownNotSolid(int dice, Pointer temp)
+        {
+            if (DiceRull.isDown(dice))
+            {
+                temp.x--;
+                if (temp.x <= 0)
+                {
+                    temp.x = 0;
+                }
+                if (GetRoomType(temp) != 0)
+                    return true;
+            }
+            return false;
+        }
+
+        Pointer CalcuDiceRull(Pointer index, int dice)
 		{
             if (LeftNotSolid(dice, index) || RightNotSolid(dice, index))
                 return index;
 
 
             Pointer nextRoom = index;
-            if (dice == 5)
+            if (DiceRull.isDown(dice))
             {
-                SetRoomType(nextRoom, 2);
+                if(GetRoomType(nextRoom) != 3)
+                    SetRoomType(nextRoom, eRoomType.Down);
+
                 nextRoom.y++;
                 if(nextRoom.y >= m_MapSize.y)
                 {
                     nextRoom.y = m_MapSize.y - 1;
                     m_Exit = nextRoom;
-					SetRoomType(nextRoom, 3);
+					SetRoomType(nextRoom, eRoomType.Top);
                 }
                 else
-                    SetRoomType(nextRoom, 3);
+                    SetRoomType(nextRoom, eRoomType.Top);
 
                 return nextRoom;
             }
-            else if (dice == 1 || dice == 2)
+            else if (DiceRull.isLeft(dice))
             {
                 nextRoom.x--;
                 if (nextRoom.x <= 0)
                 {
                     nextRoom.x = 0;
-                    SetRoomType(nextRoom, 2);
+                    SetRoomType(nextRoom, eRoomType.Down);
                     nextRoom.y++;
                     if (nextRoom.y >= m_MapSize.y)
                     {
                         nextRoom.y = m_MapSize.y - 1;
                         m_Exit = nextRoom;
-                        SetRoomType(nextRoom, 1);
+                        SetRoomType(nextRoom, eRoomType.LeftRight);
                     }
                     else
-                        SetRoomType(nextRoom, 3);
+                        SetRoomType(nextRoom, eRoomType.Top);
                 }
                 else
                 {
-                    SetRoomType(nextRoom, 1);
+                    SetRoomType(nextRoom, eRoomType.LeftRight);
                 }
             }
-            else if (dice == 3 || dice == 4)
+            else if (DiceRull.isRight(dice))
             {
                 nextRoom.x++;
                 if (nextRoom.x >= m_MapSize.x - 1)
                 {
                     nextRoom.x = m_MapSize.x - 1;
-                    SetRoomType(nextRoom, 2);
+                    SetRoomType(nextRoom, eRoomType.Down);
                     nextRoom.y++;
                     if (nextRoom.y >= m_MapSize.y)
                     {
                         nextRoom.y = m_MapSize.y - 1;
                         m_Exit = nextRoom;
-                        SetRoomType(nextRoom, 1);
+                        SetRoomType(nextRoom, eRoomType.LeftRight);
                     }
                     else
-                        SetRoomType(nextRoom, 3);
+                        SetRoomType(nextRoom, eRoomType.Top);
                 }
                 else
                 {
-                    SetRoomType(nextRoom, 1);
+                    SetRoomType(nextRoom, eRoomType.LeftRight);
                 }
             }
 

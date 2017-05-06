@@ -48,7 +48,6 @@ namespace Platformer
 
             int lX = rooms.GetLength(0);
             int lY = rooms.GetLength(1);
-			int a = 0;
             for(int y = lY - 1; y >= 0; --y)
 			//for(int y = 0; y < lY; ++y)
             {
@@ -116,7 +115,7 @@ namespace Platformer
 				}
 
 				if(d == '4') {
-					if(Random.RandomRange(0, 100) <= 40)
+					if(Random.Range(0, 100) <= 40)
 						Instantiate (GoL,new Vector3(pointX, pointY, 0f), Quaternion.identity);
 
 					continue;

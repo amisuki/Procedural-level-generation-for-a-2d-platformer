@@ -333,7 +333,19 @@ namespace Platformer
             Debug.Log("dice : " + dice);
             if (DiceRull.isTop(dice))
             {
-                SetRoomType(nextRoom, eRoomType.UpperDown);
+                Pointer temp = nextRoom;
+                temp.y++;
+                //위에서 2번이 연속으로 배치할경우 현재방의 십자형태로 룸을 바꿔준다
+                if (temp.y < mapSize.y && GetRoomType(temp) == (int)eRoomType.UpperDown)
+                {
+                    SetRoomType(nextRoom, eRoomType.Cross);
+                }
+                else
+                {
+                    SetRoomType(nextRoom, eRoomType.UpperDown);
+                }
+
+
                 nextRoom.y--;
                 SetRoomType(nextRoom, eRoomType.UpperTop); 
 

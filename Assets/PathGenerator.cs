@@ -82,7 +82,7 @@ namespace Platformer
             return false;
         }
 
-        public static bool isTop(int dice)
+        public static bool isDown(int dice)
         {
             if (dice == 7 || dice == 8)
             {
@@ -91,7 +91,7 @@ namespace Platformer
             return false;
         }
 
-        public static bool isDown(int dice)
+        public static bool isTop(int dice)
         {
             if (dice == 5 || dice == 6)
             {
@@ -107,8 +107,12 @@ namespace Platformer
         public enum eRoomType
         {
             LeftRight = 1,
-            Down = 2,
-            Top = 3,
+            UnderDown = 2,
+            UnderTop = 3,
+            UpperDown = 4,
+            UpperTop = 5,
+
+            Cross = 6,
         }
 
 		Size m_MapSize;
@@ -282,7 +286,7 @@ namespace Platformer
 
         bool TopSolid(int dice, Pointer temp)
         {
-            if (DiceRull.isTop(dice))
+            if (DiceRull.isDown(dice))
             {
                 temp.y++;
                 if (temp.y >= m_MapSize.y)
@@ -297,7 +301,7 @@ namespace Platformer
 
         bool DownSolid(int dice, Pointer temp)
         {
-            if (DiceRull.isDown(dice))
+            if (DiceRull.isTop(dice))
             {
                 temp.y--;
                 if (temp.y <= 0)
@@ -312,9 +316,9 @@ namespace Platformer
 
         Pointer CalcuDiceRull(Pointer index, int dice)
 		{
-            if (DiceRull.isDown(dice) && DownSolid(dice, index) == false)
+            if (DiceRull.isTop(dice) && DownSolid(dice, index) == false)
                 return index;
-            if (DiceRull.isTop(dice) && TopSolid(dice, index) == false)
+            if (DiceRull.isDown(dice) && TopSolid(dice, index) == false)
                 return index;
             if (DiceRull.isRight(dice) && RightSolid(dice, index) == false)
                 return index;
@@ -326,21 +330,30 @@ namespace Platformer
             //    return index;
 
             Pointer nextRoom = index;
-
-            if (DiceRull.isDown(dice))
+            Debug.Log("dice : " + dice);
+            if (DiceRull.isTop(dice))
             {
-                SetRoomType(nextRoom, eRoomType.Down);
+                SetRoomType(nextRoom, eRoomType.UpperDown);
                 nextRoom.y--;
-                SetRoomType(nextRoom, eRoomType.Top);
+                SetRoomType(nextRoom, eRoomType.UpperTop); 
 
                 return nextRoom;
             }
 
-            else if (DiceRull.isTop(dice))
+            else if (DiceRull.isDown(dice))
             {
-                SetRoomType(nextRoom, eRoomType.Top);
+                Pointer temp = nextRoom;
+                temp.y--;
+                //위에서 2번이 연속으로 배치할경우 현재방의 십자형태로 룸을 바꿔준다
+                if(temp.y >= 0 &&  GetRoomType(temp) == (int)eRoomType.UnderDown) {
+                    SetRoomType(nextRoom, eRoomType.Cross);
+                }
+                else {
+                    SetRoomType(nextRoom, eRoomType.UnderDown);
+                }
+                    
                 nextRoom.y++;
-                SetRoomType(nextRoom, eRoomType.Down);
+                SetRoomType(nextRoom, eRoomType.UnderTop);
 
                 return nextRoom;
             }
@@ -370,7 +383,7 @@ namespace Platformer
 		public int RoomSizeX;
 		public int RoomSizeY;
 
-		GridMap m_MapData;
+		public GridMap m_MapData;
         public GridMap mapData
         {
             get { return m_MapData; }
@@ -410,15 +423,15 @@ namespace Platformer
                 string line = "";
                 for (int x = 0; x < MapSizeX; ++x)
                 {
-                    if(m_MapData.entrance.x == x && m_MapData.entrance.y == y)
-                    {
-                        line += "S";
-                    }
-                    else if (m_MapData.exit.x == x && m_MapData.exit.y == y)
-                    {
-                        line += "E";
-                    }
-                    else
+                    //if(m_MapData.entrance.x == x && m_MapData.entrance.y == y)
+                    //{
+                    //    line += "S";
+                    //}
+                    //else if (m_MapData.exit.x == x && m_MapData.exit.y == y)
+                    //{
+                    //    line += "E";
+                    //}
+                    //else
                         line += m_MapData.m_Rooms[x, y].type.ToString();
                 }
                 text.text += line + "\n";

@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Text.RegularExpressions;
 
 namespace Platformer
 {
@@ -21,6 +22,12 @@ namespace Platformer
         public string[] roomtype2;
         [TextArea]
         public string[] roomtype3;
+        [TextArea]
+        public string[] roomtype4;
+        [TextArea]
+        public string[] roomtype5;
+        [TextArea]
+        public string[] roomtypeCross;
 
         public GameObject Go1;
         public GameObject GoL;
@@ -53,11 +60,9 @@ namespace Platformer
             {
 				for (int x = 0; x < lX; ++x)
                 {
-//					/if (x == 1 && y == lY - 2) {
-						string data = GetRoomData (rooms [x, y].type);
-
-						FillOneRoom (data, x, Mathf.Abs((y + 1) - lY), rooms [x, y].type, width, height, 4, 4);
-
+					//if (x == 1 && y == lY - 2) {
+                        string data = GetRoomData (rooms [x, y].type);
+                        FillOneRoom (data, x, Mathf.Abs((y + 1) - lY), rooms [x, y].type, width, height, 4, 4);
 					//}
                 }
             }
@@ -65,23 +70,31 @@ namespace Platformer
 
 		public void FillOneRoom(string data, int parentX, int parentY, int type, int width, int height, int mapSizeX, int mapSizeY)
         {
-			Debug.Log ("parentX : " + parentX + "   parentY : " + parentY + "  type : " + type + " width : " + width + " height : " + height);
-			Debug.Log (data);
+            //Debug.Log ("parentX : " + parentX + "   parentY : " + parentY + "  type : " + type + " width : " + width + " height : " + height);
 
-			int j = 0;
-			int y = height - 1;
-			float originX = parentX * width;
+            string newdata = string.Join(" ", Regex.Split(data, @"(?:\r\n|\n|\r)"));
+            //olddata.Replace("\\n", "");
+            Debug.Log(newdata);
+            //newdata = olddata;
+
+            int j = 0;
+            int y = height - 1;
+
+            float originX = parentX * width;
 			float originY = parentY * height;
 
             //float spriteSize = 0.64f;
-            for(int i = 0; i < data.Length; ++i)
+            for (int i = 0; i < newdata.Length; ++i)
             {
-                char d = data[i];
-				// d == "\n"
-				if (d == 10) {
-					y--;
-					continue;
-				}
+                char d = newdata[i];
+				if(d == ' ')
+                {
+                    //if (j % width == 0)
+                    //{
+                        y--;
+                    //}
+                    continue;
+                }
 
 				int YIndex = y;
 				int XIndex = j % width;
@@ -97,39 +110,37 @@ namespace Platformer
 					//GameObject go = 
 					Instantiate (Go1,new Vector3(pointX, pointY, 0f), Quaternion.identity);
 
-                    continue;
                 }
 
 				if(d == 'P') {
 					//GameObject go = 
 					Instantiate (GoP,new Vector3(pointX, pointY, 0f), Quaternion.identity);
 
-					continue;
+
 				}
 
 				if(d == 'L') {
 					//GameObject go = 
 					Instantiate (GoL,new Vector3(pointX, pointY, 0f), Quaternion.identity);
 
-					continue;
+
 				}
 
 				if(d == '4') {
 					if(Random.Range(0, 100) <= 40)
 						Instantiate (GoL,new Vector3(pointX, pointY, 0f), Quaternion.identity);
 
-					continue;
 				}
 				if(d == '5') {
 
 					//ObstacleBlocks (newX, newY, false);
-					continue;
+
 				}
 				if(d == '6') {
 
 					//ObstacleBlocks (newX, newY, true);
-					continue;
 				}
+
             }
         }
 
@@ -157,6 +168,21 @@ namespace Platformer
             {
                 index = Random.Range(0, roomtype3.Length);
                 data = roomtype3[index];
+            }
+            else if (type == 4)
+            {
+                index = Random.Range(0, roomtype4.Length);
+                data = roomtype4[index];
+            }
+            else if (type == 5)
+            {
+                index = Random.Range(0, roomtype5.Length);
+                data = roomtype5[index];
+            }
+            else if (type == 6)
+            {
+                index = Random.Range(0, roomtypeCross.Length);
+                data = roomtypeCross[index];
             }
             else
             {

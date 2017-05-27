@@ -11,9 +11,6 @@ public class GoodGameManager : MonoBehaviour {
     {
         generator = GetComponent<Platformer.PathGenerator>();
         levelMaker = GetComponent<Platformer.LevelMaker>();
-
-        
-        
     }
 
     public void MakePath()

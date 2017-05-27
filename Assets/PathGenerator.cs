@@ -112,7 +112,8 @@ namespace Platformer
             UpperDown = 4,
             UpperTop = 5,
 
-            Cross = 6,
+            UnderCross = 6,
+			UpperCross = 7,
         }
 
 		Size m_MapSize;
@@ -333,18 +334,20 @@ namespace Platformer
             Debug.Log("dice : " + dice);
             if (DiceRull.isTop(dice))
             {
-                Pointer temp = nextRoom;
-                temp.y++;
-                //위에서 2번이 연속으로 배치할경우 현재방의 십자형태로 룸을 바꿔준다
-                if (temp.y < mapSize.y && GetRoomType(temp) == (int)eRoomType.UpperDown)
-                {
-                    SetRoomType(nextRoom, eRoomType.Cross);
-                }
-                else
-                {
-                    SetRoomType(nextRoom, eRoomType.UpperDown);
-                }
+				Pointer it = nextRoom;
 
+				//위에서 2번이 연속으로 배치할경우 현재방의 십자형태로 룸을 바꿔준다
+				if (GetRoomType (it) == (int)eRoomType.UpperTop) {
+					bool result;
+					do {
+						result = SearchUpperDown (ref it);
+						if (result)
+							it.y++;
+					} while(result);
+				}
+				else {
+					SetRoomType (nextRoom, eRoomType.UpperDown);
+				}
 
                 nextRoom.y--;
                 SetRoomType(nextRoom, eRoomType.UpperTop); 
@@ -358,7 +361,7 @@ namespace Platformer
                 temp.y--;
                 //위에서 2번이 연속으로 배치할경우 현재방의 십자형태로 룸을 바꿔준다
                 if(temp.y >= 0 &&  GetRoomType(temp) == (int)eRoomType.UnderDown) {
-                    SetRoomType(nextRoom, eRoomType.Cross);
+					SetRoomType(nextRoom, eRoomType.UnderCross);
                 }
                 else {
                     SetRoomType(nextRoom, eRoomType.UnderDown);
@@ -381,6 +384,17 @@ namespace Platformer
             }
 
             return nextRoom;
+		}
+
+		bool SearchUpperDown(ref Pointer it)
+		{
+			if (it.y >= 0 && it.y < mapSize.y && GetRoomType (it) == (int)eRoomType.UpperTop) {
+				SetRoomType (it, eRoomType.UpperCross);
+			} 
+			else
+				return false;
+
+			return true;
 		}
 	}
 

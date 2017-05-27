@@ -27,7 +27,9 @@ namespace Platformer
         [TextArea]
         public string[] roomtype5;
         [TextArea]
-        public string[] roomtypeCross;
+        public string[] roomtypeUndderCross;
+		[TextArea]
+		public string[] roomtypeUpperCross;
 
         public GameObject Go1;
         public GameObject GoL;
@@ -181,9 +183,14 @@ namespace Platformer
             }
             else if (type == 6)
             {
-                index = Random.Range(0, roomtypeCross.Length);
-                data = roomtypeCross[index];
+                index = Random.Range(0, roomtypeUndderCross.Length);
+                data = roomtypeUndderCross[index];
             }
+			else if (type == 7)
+			{
+				index = Random.Range(0, roomtypeUpperCross.Length);
+				data = roomtypeUpperCross[index];
+			}
             else
             {
                 index = Random.Range(0, roomtype0.Length);
